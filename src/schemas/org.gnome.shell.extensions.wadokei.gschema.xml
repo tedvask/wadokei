@@ -26,6 +26,17 @@
       <summary>Time format</summary>
       <description>system follows the GNOME clock-format setting.</description>
     </key>
+    <key name="boundary-mode" type="s">
+      <choices>
+        <choice value="official"/>
+        <choice value="civil"/>
+        <choice value="edo"/>
+        <choice value="minutes"/>
+      </choices>
+      <default>'edo'</default>
+      <summary>Day boundary definition</summary>
+      <description>official: sunrise/sunset; civil: sun 6 degrees below horizon; edo: sun 7 degrees 21'40" below horizon (ake-mutsu/kure-mutsu); minutes: fixed offset from sunrise/sunset.</description>
+    </key>
     <key name="dawn-dusk-offset" type="i">
       <range min="0" max="90"/>
       <default>36</default>

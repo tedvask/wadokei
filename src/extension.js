@@ -168,7 +168,7 @@ const toJulian = d => d.valueOf() / DAY_MS - 0.5 + J1970;
 const fromJulian = j => new Date((j + 0.5 - J1970) * DAY_MS);
 const toDays = d => toJulian(d) - J2000;
 
-function sunTimes(date, lat, lng) {
+function sunTimes(date, lat, lng, h0deg) {
     const lw = RAD * -lng;
     const phi = RAD * lat;
     const d = toDays(date);
@@ -180,7 +180,7 @@ function sunTimes(date, lat, lng) {
     const dec = Math.asin(Math.sin(0) * Math.cos(E_OBL) +
         Math.cos(0) * Math.sin(E_OBL) * Math.sin(L));
     const Jnoon = J2000 + ds + 0.0053 * Math.sin(M) - 0.0069 * Math.sin(2 * L);
-    const h0 = RAD * -0.833;
+    const h0 = RAD * h0deg;
     const cosH = (Math.sin(h0) - Math.sin(phi) * Math.sin(dec)) /
         (Math.cos(phi) * Math.cos(dec));
     if (cosH < -1 || cosH > 1)
@@ -193,22 +193,37 @@ function sunTimes(date, lat, lng) {
 }
 
 // ── Toki computation ────────────────────────────────────────────────
-function dawnDusk(date, lat, lon, offsetMin) {
-    const t = sunTimes(date, lat, lon);
+// Solar depression (degrees below horizon) per boundary mode.
+// 'official' is the disc: 50' below, i.e. refraction + solar radius.
+const BOUNDARY_DEPRESSION = {
+    official: 0.8333,
+    civil: 6,
+    edo: 7.3611,   // ake-mutsu/kure-mutsu: 7 deg 21' 40"
+};
+
+function dawnDusk(date, lat, lon, mode, offsetMin) {
+    if (mode === 'minutes') {
+        const t = sunTimes(date, lat, lon, -0.8333);
+        if (!t)
+            return null;
+        const off = offsetMin * 60000;
+        return {
+            dawn: new Date(t.sunrise.getTime() - off),
+            dusk: new Date(t.sunset.getTime() + off),
+        };
+    }
+    const depression = BOUNDARY_DEPRESSION[mode] ?? BOUNDARY_DEPRESSION.edo;
+    const t = sunTimes(date, lat, lon, -depression);
     if (!t)
         return null;
-    const off = offsetMin * 60000;
-    return {
-        dawn: new Date(t.sunrise.getTime() - off),
-        dusk: new Date(t.sunset.getTime() + off),
-    };
+    return {dawn: t.sunrise, dusk: t.sunset};
 }
 
-function computeToki(now, lat, lon, offsetMin) {
+function computeToki(now, lat, lon, mode, offsetMin) {
     const t = now.getTime();
-    const today = dawnDusk(now, lat, lon, offsetMin);
-    const yest = dawnDusk(new Date(t - DAY_MS), lat, lon, offsetMin);
-    const tom = dawnDusk(new Date(t + DAY_MS), lat, lon, offsetMin);
+    const today = dawnDusk(now, lat, lon, mode, offsetMin);
+    const yest = dawnDusk(new Date(t - DAY_MS), lat, lon, mode, offsetMin);
+    const tom = dawnDusk(new Date(t + DAY_MS), lat, lon, mode, offsetMin);
     if (!today || !yest || !tom)
         return null;
 
@@ -422,13 +437,14 @@ export default class WadokeiExtension extends Extension {
         const geoActive = useGeo && this._geoLat !== null;
         const lat = geoActive ? this._geoLat : this._settings.get_double('latitude');
         const lon = geoActive ? this._geoLon : this._settings.get_double('longitude');
+        const mode = this._settings.get_string('boundary-mode');
         const offset = this._settings.get_int('dawn-dusk-offset');
         const tf = this._settings.get_string('time-format');
         const use12 = tf === '12h' ||
             (tf === 'system' &&
              this._ifaceSettings.get_string('clock-format') === '12h');
 
-        const res = computeToki(new Date(), lat, lon, offset);
+        const res = computeToki(new Date(), lat, lon, mode, offset);
         if (!res) {
             this._lastSchedule = null;
             this._schedKey = '';
@@ -475,9 +491,15 @@ export default class WadokeiExtension extends Extension {
 
         let dawnStr = hhmm(today.dawn, use12);
         let duskStr = hhmm(today.dusk, use12);
-        if (offset > 0) {
+        if (mode === 'minutes' && offset > 0) {
             dawnStr += ` (−${offset}′)`;
             duskStr += ` (+${offset}′)`;
+        } else if (mode === 'civil') {
+            dawnStr += ' (6°)';
+            duskStr += ' (6°)';
+        } else if (mode === 'edo') {
+            dawnStr += ' (7°22′)';
+            duskStr += ' (7°22′)';
         }
         this._sunItem.label.set_text(T.dawnDusk(dawnStr, duskStr));
         this._locItem.label.set_text(

@@ -37,6 +37,24 @@ export default class WadokeiPreferences extends ExtensionPreferences {
         const time = new Adw.PreferencesGroup({title: 'Timekeeping'});
         page.add(time);
 
+        const BM_CODES = ['official', 'civil', 'edo', 'minutes'];
+        const bmRow = new Adw.ComboRow({
+            title: 'Day boundary',
+            subtitle: 'How dawn and dusk are defined',
+            model: Gtk.StringList.new([
+                'Sunrise and sunset',
+                'Civil twilight (sun 6\u00b0 below horizon)',
+                'Edo convention (sun 7\u00b022\u2032 below horizon)',
+                'Fixed offset in minutes',
+            ]),
+        });
+        const bmCurrent = BM_CODES.indexOf(settings.get_string('boundary-mode'));
+        bmRow.selected = bmCurrent >= 0 ? bmCurrent : 2;
+        bmRow.connect('notify::selected', () => {
+            settings.set_string('boundary-mode', BM_CODES[bmRow.selected]);
+        });
+        time.add(bmRow);
+
         const TF_CODES = ['system', '12h', '24h'];
         const tfRow = new Adw.ComboRow({
             title: 'Time format',
@@ -59,6 +77,15 @@ export default class WadokeiPreferences extends ExtensionPreferences {
         settings.bind('dawn-dusk-offset', offsetRow, 'value',
             Gio.SettingsBindFlags.DEFAULT);
         time.add(offsetRow);
+
+        const syncOffsetSensitive = () => {
+            offsetRow.sensitive =
+                settings.get_string('boundary-mode') === 'minutes';
+        };
+        const bmSid = settings.connect('changed::boundary-mode',
+            syncOffsetSensitive);
+        syncOffsetSensitive();
+        window.connect('close-request', () => settings.disconnect(bmSid));
 
         // ── Chimes ───────────────────────────────────────────────
         const chimes = new Adw.PreferencesGroup({title: 'Chimes'});

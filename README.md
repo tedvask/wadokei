@@ -107,8 +107,9 @@ wadokei@tianci.vilnius`) — nothing is configured by editing code:
   hanzi and are intentionally never translated — they are the interface.
 - **Time format** — 12-hour or 24-hour; follows the GNOME clock setting
   by default.
-- **Dawn/dusk offset** — the Edo civil convention, 36 minutes by default;
-  set to 0 for astronomical sunrise/sunset.
+- **Day boundary** — how dawn/dusk are defined: the Edo depression angle
+  7°21′40″ (default), civil twilight (6°), plain sunrise/sunset, or a
+  fixed offset in minutes.
 - **Location** — GeoClue geolocation on/off, with manual coordinates used
   when it is off or unavailable.
 - **Chimes** — off by default. When enabled, the bell strikes the
