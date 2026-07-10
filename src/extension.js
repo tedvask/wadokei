@@ -473,8 +473,13 @@ export default class WadokeiExtension extends Extension {
                 : PopupMenu.Ornament.NONE);
         }
 
-        this._sunItem.label.set_text(
-            T.dawnDusk(hhmm(today.dawn, use12), hhmm(today.dusk, use12)));
+        let dawnStr = hhmm(today.dawn, use12);
+        let duskStr = hhmm(today.dusk, use12);
+        if (offset > 0) {
+            dawnStr += ` (−${offset}′)`;
+            duskStr += ` (+${offset}′)`;
+        }
+        this._sunItem.label.set_text(T.dawnDusk(dawnStr, duskStr));
         this._locItem.label.set_text(
             `${lat.toFixed(3)}°, ${lon.toFixed(3)}° · ` +
             (geoActive ? T.geo : T.manual));
