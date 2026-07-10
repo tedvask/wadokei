@@ -5,7 +5,7 @@ UUID = wadokei@tianci.vilnius
 all: pack
 
 pack:
-	gnome-extensions pack src --force -o .
+	gnome-extensions pack src --extra-source=assets --force -o .
 
 install: pack
 	gnome-extensions install --force $(UUID).shell-extension.zip

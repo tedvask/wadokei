@@ -1,9 +1,13 @@
 {
   "uuid": "wadokei@tianci.vilnius",
   "name": "Wadokei 和時計",
-  "description": "Japanese temporal hours (不定時法): the current toki kanji in the top bar, computed from sunrise/sunset at your location. The popup lists all twelve hours. Language, dawn/dusk offset, and location are configurable in preferences. No notifications.",
-  "shell-version": ["48", "49", "50"],
+  "description": "Japanese temporal hours (不定時法): the current toki kanji in the top bar, computed from sunrise/sunset at your location. The popup lists all twelve hours. Optional hourly bell chime (off by default; strikes the traditional bell count at each hour's center). Language, time format, dawn/dusk offset, and location are configurable in preferences. No notifications.",
+  "shell-version": [
+    "48",
+    "49",
+    "50"
+  ],
   "settings-schema": "org.gnome.shell.extensions.wadokei",
-  "version": 7,
+  "version": 8,
   "url": "https://github.com/tedvask/wadokei"
 }

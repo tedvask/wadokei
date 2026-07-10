@@ -22,6 +22,8 @@ import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 const UPDATE_SECONDS = 30;
+const STRIKE_INTERVAL_MS = 3000;   // pause between bell strikes
+const CHIME_TOLERANCE_MS = 90000;  // skip a strike this stale (e.g. after suspend)
 const PANEL_SUFFIX = '';        // bare kanji in the panel (午)
 
 // ── Tables ──────────────────────────────────────────────────────────
@@ -215,6 +217,8 @@ function computeToki(now, lat, lon, offsetMin) {
     const dDay = (today.dusk - today.dawn) / 6;
     const nNext = (tom.dawn - today.dusk) / 6;
     const dTom = (tom.dusk - tom.dawn) / 6;
+    if (dYest <= 0 || nPrev <= 0 || dDay <= 0 || nNext <= 0 || dTom <= 0)
+        return null; // twilight ate the night: treat as polar
 
     const segs = [];
     const addRun = (bell0, unit, branches, halfBefore0, isDayRun) => {
@@ -267,6 +271,10 @@ export default class WadokeiExtension extends Extension {
     enable() {
         this._settings = this.getSettings();
         this._geoLat = null;
+        this._lastSchedule = null;
+        this._schedKey = '';
+        this._chimeTimer = null;
+        this._strikeTimers = new Set();
         this._geoLon = null;
 
         this._indicator = new PanelMenu.Button(0.5, 'Wadokei', false);
@@ -304,8 +312,10 @@ export default class WadokeiExtension extends Extension {
 
         Main.panel.addToStatusArea(this.uuid, this._indicator);
 
-        this._settingsId = this._settings.connect('changed',
-            () => this._update());
+        this._settingsId = this._settings.connect('changed', () => {
+            this._update();
+            this._armChime();
+        });
         this._ifaceSettings = new Gio.Settings({
             schema_id: 'org.gnome.desktop.interface',
         });
@@ -324,6 +334,13 @@ export default class WadokeiExtension extends Extension {
     }
 
     disable() {
+        if (this._chimeTimer) {
+            GLib.source_remove(this._chimeTimer);
+            this._chimeTimer = null;
+        }
+        this._stopStrikes();
+        this._strikeTimers = null;
+        this._lastSchedule = null;
         if (this._timeout) {
             GLib.source_remove(this._timeout);
             this._timeout = null;
@@ -413,6 +430,12 @@ export default class WadokeiExtension extends Extension {
 
         const res = computeToki(new Date(), lat, lon, offset);
         if (!res) {
+            this._lastSchedule = null;
+            this._schedKey = '';
+            if (this._chimeTimer) {
+                GLib.source_remove(this._chimeTimer);
+                this._chimeTimer = null;
+            }
             this._label.set_text('—');
             this._infoItem.label.set_text(T.polar);
             this._rangeItem.label.set_text('');
@@ -423,6 +446,13 @@ export default class WadokeiExtension extends Extension {
             return;
         }
         const {toki, schedule, today} = res;
+
+        const key = schedule.map(x => `${x.branch}@${x.bell.getTime()}`).join(',');
+        if (key !== this._schedKey) {
+            this._schedKey = key;
+            this._lastSchedule = schedule;
+            this._armChime();
+        }
 
         this._label.set_text(`${toki.branch}${PANEL_SUFFIX}`);
         this._infoItem.label.set_text(
@@ -448,5 +478,55 @@ export default class WadokeiExtension extends Extension {
         this._locItem.label.set_text(
             `${lat.toFixed(3)}°, ${lon.toFixed(3)}° · ` +
             (geoActive ? T.geo : T.manual));
+    }
+
+    _armChime() {
+        if (this._chimeTimer) {
+            GLib.source_remove(this._chimeTimer);
+            this._chimeTimer = null;
+        }
+        if (!this._settings?.get_boolean('chime-enabled')) {
+            this._stopStrikes();
+            return;
+        }
+        const sched = this._lastSchedule;
+        if (!sched)
+            return;
+        const now = Date.now();
+        const next = sched.find(x => x.bell.getTime() > now + 1000);
+        if (!next)
+            return;
+        this._chimeTimer = GLib.timeout_add(GLib.PRIORITY_DEFAULT,
+            next.bell.getTime() - now, () => {
+                this._chimeTimer = null;
+                if (Math.abs(Date.now() - next.bell.getTime()) < CHIME_TOLERANCE_MS)
+                    this._strike(BELL_COUNT[next.branch]);
+                this._armChime();
+                return GLib.SOURCE_REMOVE;
+            });
+    }
+
+    _stopStrikes() {
+        if (!this._strikeTimers)
+            return;
+        for (const id of this._strikeTimers)
+            GLib.source_remove(id);
+        this._strikeTimers.clear();
+    }
+
+    _strike(count) {
+        const custom = this._settings.get_string('chime-sound');
+        const file = Gio.File.new_for_path(
+            custom || `${this.path}/assets/bell.oga`);
+        const player = global.display.get_sound_player();
+        for (let i = 0; i < count; i++) {
+            const id = GLib.timeout_add(GLib.PRIORITY_DEFAULT,
+                i * STRIKE_INTERVAL_MS, () => {
+                    this._strikeTimers.delete(id);
+                    player.play_from_file(file, 'Wadokei bell', null);
+                    return GLib.SOURCE_REMOVE;
+                });
+            this._strikeTimers.add(id);
+        }
     }
 }

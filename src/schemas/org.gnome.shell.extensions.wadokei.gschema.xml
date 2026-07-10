@@ -46,5 +46,15 @@
       <default>139.7745</default>
       <summary>Manual longitude</summary>
     </key>
+    <key name="chime-enabled" type="b">
+      <default>false</default>
+      <summary>Hourly bell chime</summary>
+      <description>Strike the bell count of each hour at its center (shoukoku). Off by default.</description>
+    </key>
+    <key name="chime-sound" type="s">
+      <default>''</default>
+      <summary>Chime sound file</summary>
+      <description>Path to an audio file; empty means the bundled temple bell.</description>
+    </key>
   </schema>
 </schemalist>

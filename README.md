@@ -6,7 +6,8 @@ kanji — the current hour of the twelve earthly branches. The popup lists the
 full cycle of twelve hours, their bell counts, boundaries, and today's dawn
 and dusk.
 
-No notifications, no sounds, no network requests. One glyph in the panel.
+No notifications, no network requests, silent by default. One glyph in the
+panel — and, if you switch it on, a temple bell.
 
 ## The timekeeping model
 
@@ -49,7 +50,7 @@ historically correct behavior, not an artifact.
 *Ake-mutsu* (明け六つ) and *kure-mutsu* (暮れ六つ) were not sunrise and
 sunset but the onset of usable light — traditionally, when the lines of
 one's palm become visible, corresponding to the sun several degrees below
-the horizon. The extension approximates this with
+the horizon. The extension approximates this with a constant offset,
 a configurable offset (36 minutes by default) before sunrise / after sunset. A fixed
 offset is a simplification (the rigorous definition is a solar depression
 angle, whose clock-time equivalent varies with season and latitude); set it
@@ -77,8 +78,10 @@ the system timezone via ordinary `Date` arithmetic, so DST transitions are
 absorbed automatically.
 
 Above the polar circles the division is undefined on days without a
-sunrise or sunset; the extension then shows an em dash and says so in the
-popup, rather than inventing hours the system never defined.
+sunrise or sunset — and, at slightly lower latitudes, a large dawn/dusk
+offset can consume a short midsummer night entirely. Both cases are
+detected, and the extension shows an em dash and says so in the popup,
+rather than inventing hours the system never defined.
 
 ## Location
 
@@ -108,6 +111,11 @@ wadokei@tianci.vilnius`) — nothing is configured by editing code:
   set to 0 for astronomical sunrise/sunset.
 - **Location** — GeoClue geolocation on/off, with manual coordinates used
   when it is off or unavailable.
+- **Chimes** — off by default. When enabled, the bell strikes the
+  traditional count of each hour (9…4) at its center, 正刻, through the
+  GNOME Shell sound player. Any audio file can be chosen; the bundled
+  default is a temple bell recording by tec_studio
+  ([freesound.org #668647](https://freesound.org/s/668647/), CC0).
 
 
 ## Installation
@@ -140,4 +148,5 @@ outside the Shell process.
 
 ## License
 
-GPL-3.0-or-later. See [LICENSE](LICENSE).
+GPL-3.0-or-later. See [LICENSE](LICENSE). The bundled bell sound
+(`assets/bell.oga`) is CC0 (public domain), by tec_studio on freesound.org.
