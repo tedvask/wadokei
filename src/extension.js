@@ -40,6 +40,8 @@ const plural3 = (n, one, few, many) => {
         return few;
     return many;
 };
+const CJK_NUM = {4: '四', 5: '五', 6: '六', 7: '七', 8: '八', 9: '九'};
+
 const pluralLt = (n, one, few, many) => {
     if (n % 10 === 1 && n % 100 !== 11)
         return one;
@@ -57,7 +59,7 @@ const L10N = {
             '辰': 'Dragon', '巳': 'Snake', '午': 'Horse', '未': 'Goat',
             '申': 'Monkey', '酉': 'Rooster', '戌': 'Dog', '亥': 'Pig',
         },
-        hourOf: a => `hour of the ${a}`,
+        hourOf: (_b, a) => `hour of the ${a}`,
         strikes: n => `${n} ${n === 1 ? 'strike' : 'strikes'}`,
         bell: t => `bell ${t}`,
         min: n => `${n} min`,
@@ -72,7 +74,7 @@ const L10N = {
             '辰': 'Дракона', '巳': 'Змеи', '午': 'Лошади', '未': 'Козы',
             '申': 'Обезьяны', '酉': 'Петуха', '戌': 'Собаки', '亥': 'Свиньи',
         },
-        hourOf: a => `час ${a}`,
+        hourOf: (_b, a) => `час ${a}`,
         strikes: n => `${n} ${plural3(n, 'удар', 'удара', 'ударов')}`,
         bell: t => `колокол ${t}`,
         min: n => `${n} мин`,
@@ -87,7 +89,7 @@ const L10N = {
             '辰': 'Drakono', '巳': 'Gyvatės', '午': 'Arklio', '未': 'Ožkos',
             '申': 'Beždžionės', '酉': 'Gaidžio', '戌': 'Šuns', '亥': 'Kiaulės',
         },
-        hourOf: a => `${a} valanda`,
+        hourOf: (_b, a) => `${a} valanda`,
         strikes: n => `${n} ${pluralLt(n, 'dūžis', 'dūžiai', 'dūžių')}`,
         bell: t => `varpas ${t}`,
         min: n => `${n} min`,
@@ -102,7 +104,7 @@ const L10N = {
             '辰': 'Цмока', '巳': 'Змяі', '午': 'Каня', '未': 'Казы',
             '申': 'Малпы', '酉': 'Пеўня', '戌': 'Сабакі', '亥': 'Свінні',
         },
-        hourOf: a => `гадзіна ${a}`,
+        hourOf: (_b, a) => `гадзіна ${a}`,
         strikes: n => `${n} ${plural3(n, 'удар', 'удары', 'удараў')}`,
         bell: t => `звон ${t}`,
         min: n => `${n} хв`,
@@ -110,6 +112,36 @@ const L10N = {
         geo: 'геалакацыя',
         manual: 'уручную',
         polar: 'Палярны дзень/ноч: суткі непадзельныя',
+    },
+    zh: {
+        animals: {
+            '子': '鼠', '丑': '牛', '寅': '虎', '卯': '兔',
+            '辰': '龙', '巳': '蛇', '午': '马', '未': '羊',
+            '申': '猴', '酉': '鸡', '戌': '狗', '亥': '猪',
+        },
+        hourOf: (b, a) => `${b}时（${a}）`,
+        strikes: n => `${CJK_NUM[n] ?? n}响`,
+        bell: t => `正刻 ${t}`,
+        min: n => `${n}分钟`,
+        dawnDusk: (a, b) => `天明 ${a} · 黄昏 ${b}`,
+        geo: '定位',
+        manual: '手动',
+        polar: '极昼/极夜：无法划分昼夜',
+    },
+    ja: {
+        animals: {
+            '子': 'ね', '丑': 'うし', '寅': 'とら', '卯': 'う',
+            '辰': 'たつ', '巳': 'み', '午': 'うま', '未': 'ひつじ',
+            '申': 'さる', '酉': 'とり', '戌': 'いぬ', '亥': 'い',
+        },
+        hourOf: (b, a) => `${b}の刻（${a}）`,
+        strikes: n => `${CJK_NUM[n] ?? n}つ`,
+        bell: t => `正刻 ${t}`,
+        min: n => `${n}分`,
+        dawnDusk: (a, b) => `明け六つ ${a} · 暮れ六つ ${b}`,
+        geo: '位置情報',
+        manual: '手動',
+        polar: '極昼・極夜のため昼夜を分割できません',
     },
 };
 
@@ -219,8 +251,15 @@ function computeToki(now, lat, lon, offsetMin) {
     return {toki: wrap(seg), schedule: schedule.map(wrap), today};
 }
 
-function hhmm(d) {
-    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+function hhmm(d, use12) {
+    const h24 = d.getHours();
+    const m = String(d.getMinutes()).padStart(2, '0');
+    if (!use12)
+        return `${String(h24).padStart(2, '0')}:${m}`;
+    let h = h24 % 12;
+    if (h === 0)
+        h = 12;
+    return `${h}:${m}${h24 < 12 ? 'am' : 'pm'}`;
 }
 
 // ── Extension ───────────────────────────────────────────────────────
@@ -246,7 +285,7 @@ export default class WadokeiExtension extends Extension {
         this._rows = [];
         for (let i = 0; i < 12; i++) {
             const row = new PopupMenu.PopupMenuItem('', {reactive: false});
-            row.label.set_style('font-family: monospace;');
+            row.label.add_style_class_name('wadokei-row');
             this._indicator.menu.addMenuItem(row);
             this._rows.push(row);
         }
@@ -267,6 +306,11 @@ export default class WadokeiExtension extends Extension {
 
         this._settingsId = this._settings.connect('changed',
             () => this._update());
+        this._ifaceSettings = new Gio.Settings({
+            schema_id: 'org.gnome.desktop.interface',
+        });
+        this._ifaceId = this._ifaceSettings.connect(
+            'changed::clock-format', () => this._update());
 
         this._update();
         this._timeout = GLib.timeout_add_seconds(
@@ -298,6 +342,11 @@ export default class WadokeiExtension extends Extension {
             this._settingsId = null;
         }
         this._settings = null;
+        if (this._ifaceId && this._ifaceSettings) {
+            this._ifaceSettings.disconnect(this._ifaceId);
+            this._ifaceId = null;
+        }
+        this._ifaceSettings = null;
         if (this._openId && this._indicator) {
             this._indicator.menu.disconnect(this._openId);
             this._openId = null;
@@ -357,6 +406,10 @@ export default class WadokeiExtension extends Extension {
         const lat = geoActive ? this._geoLat : this._settings.get_double('latitude');
         const lon = geoActive ? this._geoLon : this._settings.get_double('longitude');
         const offset = this._settings.get_int('dawn-dusk-offset');
+        const tf = this._settings.get_string('time-format');
+        const use12 = tf === '12h' ||
+            (tf === 'system' &&
+             this._ifaceSettings.get_string('clock-format') === '12h');
 
         const res = computeToki(new Date(), lat, lon, offset);
         if (!res) {
@@ -373,24 +426,25 @@ export default class WadokeiExtension extends Extension {
 
         this._label.set_text(`${toki.branch}${PANEL_SUFFIX}`);
         this._infoItem.label.set_text(
-            `${toki.branch} — ${T.hourOf(T.animals[toki.branch])}, ` +
+            `${toki.branch} — ${T.hourOf(toki.branch, T.animals[toki.branch])}, ` +
             T.strikes(BELL_COUNT[toki.branch]));
         this._rangeItem.label.set_text(
-            `${hhmm(toki.start)} – ${hhmm(toki.end)} · ` +
-            `${T.bell(hhmm(toki.bell))} · ${T.min(toki.spanMin)}`);
+            `${hhmm(toki.start, use12)} – ${hhmm(toki.end, use12)} · ` +
+            `${T.bell(hhmm(toki.bell, use12))} · ${T.min(toki.spanMin)}`);
 
         for (let i = 0; i < 12; i++) {
             const s = schedule[i];
             const row = this._rows[i];
             row.label.set_text(
                 `${s.branch} ${BELL_COUNT[s.branch]} ` +
-                `${hhmm(s.start)}–${hhmm(s.end)} ${T.animals[s.branch]}`);
+                `${hhmm(s.start, use12)}–${hhmm(s.end, use12)} ${T.animals[s.branch]}`);
             row.setOrnament(s.current
                 ? PopupMenu.Ornament.DOT
                 : PopupMenu.Ornament.NONE);
         }
 
-        this._sunItem.label.set_text(T.dawnDusk(hhmm(today.dawn), hhmm(today.dusk)));
+        this._sunItem.label.set_text(
+            T.dawnDusk(hhmm(today.dawn, use12), hhmm(today.dusk, use12)));
         this._locItem.label.set_text(
             `${lat.toFixed(3)}°, ${lon.toFixed(3)}° · ` +
             (geoActive ? T.geo : T.manual));

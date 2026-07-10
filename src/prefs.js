@@ -6,8 +6,8 @@ import Gio from 'gi://Gio';
 
 import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
-const LANG_CODES = ['auto', 'en', 'ru', 'lt', 'be'];
-const LANG_NAMES = ['System / Системный', 'English', 'Русский', 'Lietuvių', 'Беларуская'];
+const LANG_CODES = ['auto', 'en', 'ru', 'lt', 'be', 'zh', 'ja'];
+const LANG_NAMES = ['System / Системный', 'English', 'Русский', 'Lietuvių', 'Беларуская', '中文', '日本語'];
 
 export default class WadokeiPreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
@@ -35,6 +35,18 @@ export default class WadokeiPreferences extends ExtensionPreferences {
         // ── Timekeeping ──────────────────────────────────────────
         const time = new Adw.PreferencesGroup({title: 'Timekeeping'});
         page.add(time);
+
+        const TF_CODES = ['system', '12h', '24h'];
+        const tfRow = new Adw.ComboRow({
+            title: 'Time format',
+            model: Gtk.StringList.new(['System', '12-hour', '24-hour']),
+        });
+        const tfCurrent = TF_CODES.indexOf(settings.get_string('time-format'));
+        tfRow.selected = tfCurrent >= 0 ? tfCurrent : 0;
+        tfRow.connect('notify::selected', () => {
+            settings.set_string('time-format', TF_CODES[tfRow.selected]);
+        });
+        time.add(tfRow);
 
         const offsetRow = new Adw.SpinRow({
             title: 'Dawn/dusk offset (minutes)',

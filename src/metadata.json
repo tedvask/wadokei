@@ -4,6 +4,6 @@
   "description": "Japanese temporal hours (不定時法): the current toki kanji in the top bar, computed from sunrise/sunset at your location. The popup lists all twelve hours. Language, dawn/dusk offset, and location are configurable in preferences. No notifications.",
   "shell-version": ["48", "49", "50"],
   "settings-schema": "org.gnome.shell.extensions.wadokei",
-  "version": 6,
+  "version": 7,
   "url": "https://github.com/tedvask/wadokei"
 }

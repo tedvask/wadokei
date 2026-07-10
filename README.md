@@ -97,9 +97,13 @@ preferences window (the Extensions app, or `gnome-extensions prefs
 wadokei@tianci.vilnius`) — nothing is configured by editing code:
 
 - **Language** — follows the system locale by default, or can be forced to
-  English, Russian, Lithuanian, or Belarusian independently of the system
-  language. The twelve branch characters (子丑寅卯辰巳午未申酉戌亥) are
+  English, Russian, Lithuanian, Belarusian, Chinese, or Japanese
+  independently of the system language. The Chinese and Japanese locales
+  use their native horological vocabulary (未时/九响, 未の刻/九つ,
+  明け六つ/暮れ六つ, 正刻). The twelve branch characters (子丑寅卯辰巳午未申酉戌亥) are
   hanzi and are intentionally never translated — they are the interface.
+- **Time format** — 12-hour or 24-hour; follows the GNOME clock setting
+  by default.
 - **Dawn/dusk offset** — the Edo civil convention, 36 minutes by default;
   set to 0 for astronomical sunrise/sunset.
 - **Location** — GeoClue geolocation on/off, with manual coordinates used

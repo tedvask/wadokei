@@ -9,10 +9,22 @@
         <choice value="ru"/>
         <choice value="lt"/>
         <choice value="be"/>
+        <choice value="zh"/>
+        <choice value="ja"/>
       </choices>
       <default>'auto'</default>
       <summary>Interface language</summary>
       <description>auto follows the system locale.</description>
+    </key>
+    <key name="time-format" type="s">
+      <choices>
+        <choice value="system"/>
+        <choice value="12h"/>
+        <choice value="24h"/>
+      </choices>
+      <default>'system'</default>
+      <summary>Time format</summary>
+      <description>system follows the GNOME clock-format setting.</description>
     </key>
     <key name="dawn-dusk-offset" type="i">
       <range min="0" max="90"/>
