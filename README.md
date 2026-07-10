@@ -49,7 +49,7 @@ historically correct behavior, not an artifact.
 *Ake-mutsu* (明け六つ) and *kure-mutsu* (暮れ六つ) were not sunrise and
 sunset but the onset of usable light — traditionally, when the lines of
 one's palm become visible, corresponding to the sun several degrees below
-the horizon. The extension approximates this with a constant offset,
+the horizon. The extension approximates this with
 a configurable offset (36 minutes by default) before sunrise / after sunset. A fixed
 offset is a simplification (the rigorous definition is a solar depression
 angle, whose clock-time equivalent varies with season and latitude); set it
