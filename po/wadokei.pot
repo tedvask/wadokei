@@ -1,0 +1,106 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the wadokei package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: wadokei 5\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-10 12:41+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: src/extension.js:44
+msgid "Rat"
+msgstr ""
+
+#: src/extension.js:44
+msgid "Ox"
+msgstr ""
+
+#: src/extension.js:44
+msgid "Tiger"
+msgstr ""
+
+#: src/extension.js:44
+msgid "Rabbit"
+msgstr ""
+
+#: src/extension.js:45
+msgid "Dragon"
+msgstr ""
+
+#: src/extension.js:45
+msgid "Snake"
+msgstr ""
+
+#: src/extension.js:45
+msgid "Horse"
+msgstr ""
+
+#: src/extension.js:45
+msgid "Goat"
+msgstr ""
+
+#: src/extension.js:46
+msgid "Monkey"
+msgstr ""
+
+#: src/extension.js:46
+msgid "Rooster"
+msgstr ""
+
+#: src/extension.js:46
+msgid "Dog"
+msgstr ""
+
+#: src/extension.js:46
+msgid "Pig"
+msgstr ""
+
+#: src/extension.js:276
+msgid "Polar day/night: the day cannot be divided"
+msgstr ""
+
+#: src/extension.js:285
+#, javascript-format
+msgid "%d strike"
+msgid_plural "%d strikes"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/extension.js:289
+#, javascript-format
+msgid "hour of the %s"
+msgstr ""
+
+#: src/extension.js:293
+#, javascript-format
+msgid "bell %s"
+msgstr ""
+
+#: src/extension.js:294
+#, javascript-format
+msgid "%d min"
+msgstr ""
+
+#: src/extension.js:308
+#, javascript-format
+msgid "Dawn %s · Dusk %s"
+msgstr ""
+
+#: src/extension.js:311
+msgid "geolocation"
+msgstr ""
+
+#: src/extension.js:311
+msgid "preset"
+msgstr ""

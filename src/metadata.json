@@ -1,0 +1,9 @@
+{
+  "uuid": "wadokei@tianci.vilnius",
+  "name": "Wadokei 和時計",
+  "description": "Japanese temporal hours (不定時法): the current toki kanji in the top bar, computed from sunrise/sunset at your location (GeoClue, with a static fallback). The popup lists all twelve hours. No notifications.",
+  "shell-version": ["48", "49", "50"],
+  "gettext-domain": "wadokei",
+  "version": 5,
+  "url": "https://github.com/tedvask/wadokei"
+}

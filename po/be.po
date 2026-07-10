@@ -1,0 +1,70 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: wadokei 5\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: be\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+msgid "Rat"
+msgstr "Пацука"
+
+msgid "Ox"
+msgstr "Быка"
+
+msgid "Tiger"
+msgstr "Тыгра"
+
+msgid "Rabbit"
+msgstr "Труса"
+
+msgid "Dragon"
+msgstr "Цмока"
+
+msgid "Snake"
+msgstr "Змяі"
+
+msgid "Horse"
+msgstr "Каня"
+
+msgid "Goat"
+msgstr "Казы"
+
+msgid "Monkey"
+msgstr "Малпы"
+
+msgid "Rooster"
+msgstr "Пеўня"
+
+msgid "Dog"
+msgstr "Сабакі"
+
+msgid "Pig"
+msgstr "Свінні"
+
+msgid "hour of the %s"
+msgstr "гадзіна %s"
+
+msgid "%d strike"
+msgid_plural "%d strikes"
+msgstr[0] "%d удар"
+msgstr[1] "%d удары"
+msgstr[2] "%d удараў"
+
+msgid "bell %s"
+msgstr "звон %s"
+
+msgid "%d min"
+msgstr "%d хв"
+
+msgid "Dawn %s · Dusk %s"
+msgstr "Світанак %s · Змярканне %s"
+
+msgid "geolocation"
+msgstr "геалакацыя"
+
+msgid "preset"
+msgstr "фіксаваныя"
+
+msgid "Polar day/night: the day cannot be divided"
+msgstr "Палярны дзень/ноч: суткі непадзельныя"
