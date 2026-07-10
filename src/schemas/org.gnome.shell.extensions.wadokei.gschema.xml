@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.wadokei"
+          path="/org/gnome/shell/extensions/wadokei/">
+    <key name="language" type="s">
+      <choices>
+        <choice value="auto"/>
+        <choice value="en"/>
+        <choice value="ru"/>
+        <choice value="lt"/>
+        <choice value="be"/>
+      </choices>
+      <default>'auto'</default>
+      <summary>Interface language</summary>
+      <description>auto follows the system locale.</description>
+    </key>
+    <key name="dawn-dusk-offset" type="i">
+      <range min="0" max="90"/>
+      <default>36</default>
+      <summary>Dawn/dusk offset in minutes</summary>
+      <description>Edo civil convention: ake-mutsu/kure-mutsu about 36 minutes before sunrise / after sunset. 0 means plain sunrise/sunset.</description>
+    </key>
+    <key name="use-geolocation" type="b">
+      <default>true</default>
+      <summary>Use GeoClue for location</summary>
+    </key>
+    <key name="latitude" type="d">
+      <range min="-90.0" max="90.0"/>
+      <default>35.6842</default>
+      <summary>Manual latitude</summary>
+    </key>
+    <key name="longitude" type="d">
+      <range min="-180.0" max="180.0"/>
+      <default>139.7745</default>
+      <summary>Manual longitude</summary>
+    </key>
+  </schema>
+</schemalist>

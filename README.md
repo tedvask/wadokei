@@ -50,11 +50,11 @@ historically correct behavior, not an artifact.
 sunset but the onset of usable light — traditionally, when the lines of
 one's palm become visible, corresponding to the sun several degrees below
 the horizon. The extension approximates this with a constant offset,
-`DAWN_DUSK_OFFSET_MIN = 36` minutes before sunrise / after sunset. A fixed
+a configurable offset (36 minutes by default) before sunrise / after sunset. A fixed
 offset is a simplification (the rigorous definition is a solar depression
-angle, whose clock-time equivalent varies with season and latitude); set the
-constant to `0` for plain sunrise/sunset if you prefer astronomical purity
-over civil convention.
+angle, whose clock-time equivalent varies with season and latitude); set it
+to 0 in preferences for plain sunrise/sunset if you prefer astronomical
+purity over civil convention.
 
 ### Bell counts
 
@@ -85,28 +85,32 @@ popup, rather than inventing hours the system never defined.
 Coordinates come from **GeoClue** at city-level accuracy when location
 services are enabled (*Settings → Privacy → Location*). GeoClue is loaded
 lazily and cancelled cleanly on disable; if it is unavailable, denied, or
-disabled, the extension silently falls back to the static coordinates in
-`src/extension.js` — Nihonbashi in Tokyo, the zero milestone of Edo, a
-deliberately conspicuous default. The popup's last line always shows the
+disabled, the manual coordinates from preferences are used instead (default:
+Nihonbashi in Tokyo, the zero milestone of Edo — a deliberately
+conspicuous placeholder). The popup's last line always shows the
 active coordinates and their source.
 
-## Languages
+## Preferences
 
-The interface follows the system locale via gettext: English (source),
-Russian, Lithuanian, Belarusian. The twelve branch characters
-(子丑寅卯辰巳午未申酉戌亥) are hanzi and are intentionally never
-translated — they are the interface.
+All options live in GSettings and are edited through the standard
+preferences window (the Extensions app, or `gnome-extensions prefs
+wadokei@tianci.vilnius`) — nothing is configured by editing code:
 
-To add a language: `make pot`, copy `po/wadokei.pot` to `po/<lang>.po`,
-translate (note the translator comment about grammatical case: animal names
-are used inside the frame "hour of the %s"), then `make install`.
+- **Language** — follows the system locale by default, or can be forced to
+  English, Russian, Lithuanian, or Belarusian independently of the system
+  language. The twelve branch characters (子丑寅卯辰巳午未申酉戌亥) are
+  hanzi and are intentionally never translated — they are the interface.
+- **Dawn/dusk offset** — the Edo civil convention, 36 minutes by default;
+  set to 0 for astronomical sunrise/sunset.
+- **Location** — GeoClue geolocation on/off, with manual coordinates used
+  when it is off or unavailable.
+
 
 ## Installation
 
 ```sh
 git clone https://github.com/tedvask/wadokei.git
 cd wadokei
-sudo dnf install gettext zip   # build dependencies
 make install
 ```
 
@@ -120,12 +124,11 @@ Requires GNOME Shell 48–50. Developed and tested on Fedora 44 / GNOME 50.
 
 ## Development
 
-| Target         | Effect                                              |
-|----------------|-----------------------------------------------------|
-| `make pot`     | regenerate the translation template from source     |
-| `make pack`    | compile translations and build the installable zip  |
-| `make install` | pack and install for the current user               |
-| `make clean`   | remove build artifacts                              |
+| Target         | Effect                                                  |
+|----------------|---------------------------------------------------------|
+| `make pack`    | build the zip via `gnome-extensions pack` (schemas compiled automatically) |
+| `make install` | pack and install for the current user                   |
+| `make clean`   | remove build artifacts                                  |
 
 The panel indicator updates every 30 seconds; the popup also refreshes on
 open. The extension holds no state between sessions and touches nothing

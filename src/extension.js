@@ -8,8 +8,8 @@
 // middle of 子 (正子). Toki boundaries lie halfway between adjacent bells;
 // the seam hours 卯 and 酉 are stitched from night and day halves of
 // different rates. Panel shows the bare kanji; the popup lists all twelve
-// hours. Location comes from GeoClue when available, otherwise from the
-// static fallback below. No notifications are ever emitted.
+// hours. All options live in GSettings (see prefs.js). No notifications
+// are ever emitted.
 
 import GLib from 'gi://GLib';
 import Gio from 'gi://Gio';
@@ -19,15 +19,8 @@ import Clutter from 'gi://Clutter';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
-import {Extension, gettext as _, ngettext} from 'resource:///org/gnome/shell/extensions/extension.js';
+import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-// ── Settings ────────────────────────────────────────────────────────
-const FALLBACK_LAT = 35.6842;   // Nihonbashi, Tokyo — zero milestone of Edo
-const FALLBACK_LON = 139.7745;  // (used until/unless GeoClue delivers)
-// Edo convention: dawn/dusk is "when the lines of your palm become
-// visible" — roughly 36 min before sunrise / after sunset.
-// Set to 0 for plain sunrise/sunset.
-const DAWN_DUSK_OFFSET_MIN = 36;
 const UPDATE_SECONDS = 30;
 const PANEL_SUFFIX = '';        // bare kanji in the panel (午)
 
@@ -38,18 +31,98 @@ const BELL_COUNT = {
     '卯': 6, '辰': 5, '巳': 4, '午': 9, '未': 8, '申': 7,
     '酉': 6, '戌': 5, '亥': 4, '子': 9, '丑': 8, '寅': 7,
 };
-// Translators: animal names are used in the frame "hour of the %s";
-// use the grammatical case that fits that frame in your language.
-const ANIMAL = {
-    '子': N_('Rat'), '丑': N_('Ox'), '寅': N_('Tiger'), '卯': N_('Rabbit'),
-    '辰': N_('Dragon'), '巳': N_('Snake'), '午': N_('Horse'), '未': N_('Goat'),
-    '申': N_('Monkey'), '酉': N_('Rooster'), '戌': N_('Dog'), '亥': N_('Pig'),
+
+// Slavic three-form plural selector.
+const plural3 = (n, one, few, many) => {
+    if (n % 10 === 1 && n % 100 !== 11)
+        return one;
+    if (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20))
+        return few;
+    return many;
+};
+const pluralLt = (n, one, few, many) => {
+    if (n % 10 === 1 && n % 100 !== 11)
+        return one;
+    if (n % 10 >= 2 && (n % 100 < 10 || n % 100 >= 20))
+        return few;
+    return many;
 };
 
-const N_ = s => s; // no-op marker for xgettext
+// Animal names are given in the grammatical case that fits the
+// "hour of the X" frame of each language.
+const L10N = {
+    en: {
+        animals: {
+            '子': 'Rat', '丑': 'Ox', '寅': 'Tiger', '卯': 'Rabbit',
+            '辰': 'Dragon', '巳': 'Snake', '午': 'Horse', '未': 'Goat',
+            '申': 'Monkey', '酉': 'Rooster', '戌': 'Dog', '亥': 'Pig',
+        },
+        hourOf: a => `hour of the ${a}`,
+        strikes: n => `${n} ${n === 1 ? 'strike' : 'strikes'}`,
+        bell: t => `bell ${t}`,
+        min: n => `${n} min`,
+        dawnDusk: (a, b) => `Dawn ${a} · Dusk ${b}`,
+        geo: 'geolocation',
+        manual: 'manual',
+        polar: 'Polar day/night: the day cannot be divided',
+    },
+    ru: {
+        animals: {
+            '子': 'Крысы', '丑': 'Быка', '寅': 'Тигра', '卯': 'Кролика',
+            '辰': 'Дракона', '巳': 'Змеи', '午': 'Лошади', '未': 'Козы',
+            '申': 'Обезьяны', '酉': 'Петуха', '戌': 'Собаки', '亥': 'Свиньи',
+        },
+        hourOf: a => `час ${a}`,
+        strikes: n => `${n} ${plural3(n, 'удар', 'удара', 'ударов')}`,
+        bell: t => `колокол ${t}`,
+        min: n => `${n} мин`,
+        dawnDusk: (a, b) => `Рассвет ${a} · Закат ${b}`,
+        geo: 'геолокация',
+        manual: 'вручную',
+        polar: 'Полярный день/ночь: сутки неделимы',
+    },
+    lt: {
+        animals: {
+            '子': 'Žiurkės', '丑': 'Jaučio', '寅': 'Tigro', '卯': 'Triušio',
+            '辰': 'Drakono', '巳': 'Gyvatės', '午': 'Arklio', '未': 'Ožkos',
+            '申': 'Beždžionės', '酉': 'Gaidžio', '戌': 'Šuns', '亥': 'Kiaulės',
+        },
+        hourOf: a => `${a} valanda`,
+        strikes: n => `${n} ${pluralLt(n, 'dūžis', 'dūžiai', 'dūžių')}`,
+        bell: t => `varpas ${t}`,
+        min: n => `${n} min`,
+        dawnDusk: (a, b) => `Aušra ${a} · Sutemos ${b}`,
+        geo: 'geolokacija',
+        manual: 'rankinis',
+        polar: 'Poliarinė diena/naktis: paros padalyti neįmanoma',
+    },
+    be: {
+        animals: {
+            '子': 'Пацука', '丑': 'Быка', '寅': 'Тыгра', '卯': 'Труса',
+            '辰': 'Цмока', '巳': 'Змяі', '午': 'Каня', '未': 'Казы',
+            '申': 'Малпы', '酉': 'Пеўня', '戌': 'Сабакі', '亥': 'Свінні',
+        },
+        hourOf: a => `гадзіна ${a}`,
+        strikes: n => `${n} ${plural3(n, 'удар', 'удары', 'удараў')}`,
+        bell: t => `звон ${t}`,
+        min: n => `${n} хв`,
+        dawnDusk: (a, b) => `Світанак ${a} · Змярканне ${b}`,
+        geo: 'геалакацыя',
+        manual: 'уручную',
+        polar: 'Палярны дзень/ноч: суткі непадзельныя',
+    },
+};
 
-// Tiny sprintf: sequential %s / %d.
-const fmt = (s, ...args) => s.replace(/%[sd]/g, () => String(args.shift()));
+function pickLocale(pref) {
+    if (pref !== 'auto')
+        return L10N[pref] ? pref : 'en';
+    for (const name of GLib.get_language_names()) {
+        const code = name.split(/[._@]/)[0].toLowerCase().split('-')[0];
+        if (L10N[code])
+            return code;
+    }
+    return 'en';
+}
 
 // ── Solar calculations (SunCalc algorithm, BSD) ─────────────────────
 const RAD = Math.PI / 180;
@@ -86,22 +159,22 @@ function sunTimes(date, lat, lng) {
 }
 
 // ── Toki computation ────────────────────────────────────────────────
-function dawnDusk(date, lat, lon) {
+function dawnDusk(date, lat, lon, offsetMin) {
     const t = sunTimes(date, lat, lon);
     if (!t)
         return null;
-    const off = DAWN_DUSK_OFFSET_MIN * 60000;
+    const off = offsetMin * 60000;
     return {
         dawn: new Date(t.sunrise.getTime() - off),
         dusk: new Date(t.sunset.getTime() + off),
     };
 }
 
-function computeToki(now, lat, lon) {
+function computeToki(now, lat, lon, offsetMin) {
     const t = now.getTime();
-    const today = dawnDusk(now, lat, lon);
-    const yest = dawnDusk(new Date(t - DAY_MS), lat, lon);
-    const tom = dawnDusk(new Date(t + DAY_MS), lat, lon);
+    const today = dawnDusk(now, lat, lon, offsetMin);
+    const yest = dawnDusk(new Date(t - DAY_MS), lat, lon, offsetMin);
+    const tom = dawnDusk(new Date(t + DAY_MS), lat, lon, offsetMin);
     if (!today || !yest || !tom)
         return null;
 
@@ -153,9 +226,9 @@ function hhmm(d) {
 // ── Extension ───────────────────────────────────────────────────────
 export default class WadokeiExtension extends Extension {
     enable() {
-        this._lat = FALLBACK_LAT;
-        this._lon = FALLBACK_LON;
-        this._geoActive = false;
+        this._settings = this.getSettings();
+        this._geoLat = null;
+        this._geoLon = null;
 
         this._indicator = new PanelMenu.Button(0.5, 'Wadokei', false);
         this._label = new St.Label({
@@ -192,6 +265,9 @@ export default class WadokeiExtension extends Extension {
 
         Main.panel.addToStatusArea(this.uuid, this._indicator);
 
+        this._settingsId = this._settings.connect('changed',
+            () => this._update());
+
         this._update();
         this._timeout = GLib.timeout_add_seconds(
             GLib.PRIORITY_DEFAULT, UPDATE_SECONDS, () => {
@@ -217,6 +293,11 @@ export default class WadokeiExtension extends Extension {
             this._geoId = null;
         }
         this._geoclue = null;
+        if (this._settingsId && this._settings) {
+            this._settings.disconnect(this._settingsId);
+            this._settingsId = null;
+        }
+        this._settings = null;
         if (this._openId && this._indicator) {
             this._indicator.menu.disconnect(this._openId);
             this._openId = null;
@@ -236,7 +317,7 @@ export default class WadokeiExtension extends Extension {
         try {
             Geoclue = (await import('gi://Geoclue')).default;
         } catch (e) {
-            return; // no typelib — stay on fallback coordinates
+            return; // no typelib — manual coordinates only
         }
         Geoclue.Simple.new(
             'org.gnome.Shell',
@@ -247,7 +328,7 @@ export default class WadokeiExtension extends Extension {
                 try {
                     simple = Geoclue.Simple.new_finish(res);
                 } catch (e) {
-                    return; // cancelled, disabled in privacy settings, etc.
+                    return; // cancelled, denied in privacy settings, etc.
                 }
                 if (!this._indicator)
                     return; // extension was disabled meanwhile
@@ -262,18 +343,25 @@ export default class WadokeiExtension extends Extension {
         const loc = this._geoclue?.get_location();
         if (!loc)
             return;
-        this._lat = loc.latitude;
-        this._lon = loc.longitude;
-        this._geoActive = true;
+        this._geoLat = loc.latitude;
+        this._geoLon = loc.longitude;
         this._update();
     }
 
     _update() {
-        const res = computeToki(new Date(), this._lat, this._lon);
+        if (!this._settings)
+            return;
+        const T = L10N[pickLocale(this._settings.get_string('language'))];
+        const useGeo = this._settings.get_boolean('use-geolocation');
+        const geoActive = useGeo && this._geoLat !== null;
+        const lat = geoActive ? this._geoLat : this._settings.get_double('latitude');
+        const lon = geoActive ? this._geoLon : this._settings.get_double('longitude');
+        const offset = this._settings.get_int('dawn-dusk-offset');
+
+        const res = computeToki(new Date(), lat, lon, offset);
         if (!res) {
             this._label.set_text('—');
-            this._infoItem.label.set_text(
-                _('Polar day/night: the day cannot be divided'));
+            this._infoItem.label.set_text(T.polar);
             this._rangeItem.label.set_text('');
             this._sunItem.label.set_text('');
             this._locItem.label.set_text('');
@@ -282,32 +370,29 @@ export default class WadokeiExtension extends Extension {
             return;
         }
         const {toki, schedule, today} = res;
-        const strikes = n => fmt(ngettext('%d strike', '%d strikes', n), n);
 
         this._label.set_text(`${toki.branch}${PANEL_SUFFIX}`);
         this._infoItem.label.set_text(
-            `${toki.branch} — ${fmt(_('hour of the %s'), _(ANIMAL[toki.branch]))}, ` +
-            strikes(BELL_COUNT[toki.branch]));
+            `${toki.branch} — ${T.hourOf(T.animals[toki.branch])}, ` +
+            T.strikes(BELL_COUNT[toki.branch]));
         this._rangeItem.label.set_text(
             `${hhmm(toki.start)} – ${hhmm(toki.end)} · ` +
-            `${fmt(_('bell %s'), hhmm(toki.bell))} · ` +
-            fmt(_('%d min'), toki.spanMin));
+            `${T.bell(hhmm(toki.bell))} · ${T.min(toki.spanMin)}`);
 
         for (let i = 0; i < 12; i++) {
             const s = schedule[i];
             const row = this._rows[i];
             row.label.set_text(
                 `${s.branch} ${BELL_COUNT[s.branch]} ` +
-                `${hhmm(s.start)}–${hhmm(s.end)} ${_(ANIMAL[s.branch])}`);
+                `${hhmm(s.start)}–${hhmm(s.end)} ${T.animals[s.branch]}`);
             row.setOrnament(s.current
                 ? PopupMenu.Ornament.DOT
                 : PopupMenu.Ornament.NONE);
         }
 
-        this._sunItem.label.set_text(
-            fmt(_('Dawn %s · Dusk %s'), hhmm(today.dawn), hhmm(today.dusk)));
+        this._sunItem.label.set_text(T.dawnDusk(hhmm(today.dawn), hhmm(today.dusk)));
         this._locItem.label.set_text(
-            `${this._lat.toFixed(3)}°, ${this._lon.toFixed(3)}° · ` +
-            (this._geoActive ? _('geolocation') : _('preset')));
+            `${lat.toFixed(3)}°, ${lon.toFixed(3)}° · ` +
+            (geoActive ? T.geo : T.manual));
     }
 }
