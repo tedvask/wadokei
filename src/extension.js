@@ -319,23 +319,23 @@ export default class WadokeiExtension extends Extension {
         this._indicator.menu.addMenuItem(this._sunItem);
         this._indicator.menu.addMenuItem(this._locItem);
 
-        this._openId = this._indicator.menu.connect(
+        this._indicator.menu.connectObject(
             'open-state-changed', (_menu, open) => {
                 if (open)
                     this._update();
-            });
+            }, this);
 
         Main.panel.addToStatusArea(this.uuid, this._indicator);
 
-        this._settingsId = this._settings.connect('changed', () => {
+        this._settings.connectObject('changed', () => {
             this._update();
             this._armChime();
-        });
+        }, this);
         this._ifaceSettings = new Gio.Settings({
             schema_id: 'org.gnome.desktop.interface',
         });
-        this._ifaceId = this._ifaceSettings.connect(
-            'changed::clock-format', () => this._update());
+        this._ifaceSettings.connectObject(
+            'changed::clock-format', () => this._update(), this);
 
         this._update();
         this._timeout = GLib.timeout_add_seconds(
@@ -364,25 +364,13 @@ export default class WadokeiExtension extends Extension {
             this._geoCancellable.cancel();
             this._geoCancellable = null;
         }
-        if (this._geoId && this._geoclue) {
-            this._geoclue.disconnect(this._geoId);
-            this._geoId = null;
-        }
+        this._geoclue?.disconnectObject(this);
         this._geoclue = null;
-        if (this._settingsId && this._settings) {
-            this._settings.disconnect(this._settingsId);
-            this._settingsId = null;
-        }
+        this._settings?.disconnectObject(this);
         this._settings = null;
-        if (this._ifaceId && this._ifaceSettings) {
-            this._ifaceSettings.disconnect(this._ifaceId);
-            this._ifaceId = null;
-        }
+        this._ifaceSettings?.disconnectObject(this);
         this._ifaceSettings = null;
-        if (this._openId && this._indicator) {
-            this._indicator.menu.disconnect(this._openId);
-            this._openId = null;
-        }
+        this._indicator?.menu.disconnectObject(this);
         this._indicator?.destroy();
         this._indicator = null;
         this._label = null;
@@ -414,8 +402,8 @@ export default class WadokeiExtension extends Extension {
                 if (!this._indicator)
                     return; // extension was disabled meanwhile
                 this._geoclue = simple;
-                this._geoId = simple.connect('notify::location',
-                    () => this._applyLocation());
+                simple.connectObject('notify::location',
+                    () => this._applyLocation(), this);
                 this._applyLocation();
             });
     }
